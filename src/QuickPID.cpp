@@ -86,6 +86,7 @@ bool QuickPID::NeedsCompute() {
   uint32_t now = micros();
   uint32_t timeChange = (now - lastTime);
   if (mode == Control::timer || timeChange >= sampleTimeUs) {
+    lastTime = now;
     return true;
   }
   return false;
@@ -135,7 +136,6 @@ void QuickPID::ComputeNow() {
 
   lastError = error;
   lastInput = input;
-  lastTime = now;
 }
 
 /* SetTunings(....)************************************************************
