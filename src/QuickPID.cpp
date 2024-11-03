@@ -71,53 +71,71 @@ QuickPID::QuickPID(float* Input, float* Output, float* Setpoint)
    when the output is computed, false when nothing has been done.
  **********************************************************************************/
 bool QuickPID::Compute() {
+  if (NeedsCompute()) {
+    ComputeNow();
+    return true;
+  }
+  return false;
+}
+
+/* NeedsCompute() *******************************************************************
+    This function returns true if a new PID Output needs to be computed. 
+  **********************************************************************************/
+bool QuickPID::NeedsCompute() {
   if (mode == Control::manual) return false;
   uint32_t now = micros();
   uint32_t timeChange = (now - lastTime);
   if (mode == Control::timer || timeChange >= sampleTimeUs) {
-
-    float input = *myInput;
-    float dInput = input - lastInput;
-    if (action == Action::reverse) dInput = -dInput;
-
-    error = *mySetpoint - input;
-    if (action == Action::reverse) error = -error;
-    float dError = error - lastError;
-
-    float peTerm = kp * error;
-    float pmTerm = kp * dInput;
-    if (pmode == pMode::pOnError) pmTerm = 0;
-    else if (pmode == pMode::pOnMeas) peTerm = 0;
-    else { //pOnErrorMeas
-      peTerm *= 0.5f;
-      pmTerm *= 0.5f;
-    }
-    pTerm = peTerm - pmTerm; // used by GetDterm()
-    iTerm =  ki  * error;
-    if (dmode == dMode::dOnError) dTerm = kd * dError;
-    else dTerm = -kd * dInput; // dOnMeas
-
-    //condition anti-windup (default)
-    if (iawmode == iAwMode::iAwCondition) {
-      bool aw = false;
-      float iTermOut = (peTerm - pmTerm) + ki * (iTerm + error);
-      if (iTermOut > outMax && dError > 0) aw = true;
-      else if (iTermOut < outMin && dError < 0) aw = true;
-      if (aw && ki) iTerm = constrain(iTermOut, -outMax, outMax);
-    }
-
-    // by default, compute output as per PID_v1
-    outputSum += iTerm;                                                 // include integral amount
-    if (iawmode == iAwMode::iAwOff) outputSum -= pmTerm;                // include pmTerm (no anti-windup)
-    else outputSum = constrain(outputSum - pmTerm, outMin, outMax);     // include pmTerm and clamp
-    *myOutput = constrain(outputSum + peTerm + dTerm, outMin, outMax);  // include dTerm, clamp and drive output
-
-    lastError = error;
-    lastInput = input;
-    lastTime = now;
     return true;
   }
-  else return false;
+  return false;
+}
+
+/* ComputeNow() ********************************************************************
+   This function actually performs the PID calculation, without checking if it is
+   actually needed. Usually called by Compute().
+   Only use, if you have checked NeedsCompute() before.
+ **********************************************************************************/
+void QuickPID::ComputeNow() {
+  float input = *myInput;
+  float dInput = input - lastInput;
+  if (action == Action::reverse) dInput = -dInput;
+
+  error = *mySetpoint - input;
+  if (action == Action::reverse) error = -error;
+  float dError = error - lastError;
+
+  float peTerm = kp * error;
+  float pmTerm = kp * dInput;
+  if (pmode == pMode::pOnError) pmTerm = 0;
+  else if (pmode == pMode::pOnMeas) peTerm = 0;
+  else { //pOnErrorMeas
+    peTerm *= 0.5f;
+    pmTerm *= 0.5f;
+  }
+  pTerm = peTerm - pmTerm; // used by GetDterm()
+  iTerm =  ki  * error;
+  if (dmode == dMode::dOnError) dTerm = kd * dError;
+  else dTerm = -kd * dInput; // dOnMeas
+
+  //condition anti-windup (default)
+  if (iawmode == iAwMode::iAwCondition) {
+    bool aw = false;
+    float iTermOut = (peTerm - pmTerm) + ki * (iTerm + error);
+    if (iTermOut > outMax && dError > 0) aw = true;
+    else if (iTermOut < outMin && dError < 0) aw = true;
+    if (aw && ki) iTerm = constrain(iTermOut, -outMax, outMax);
+  }
+
+  // by default, compute output as per PID_v1
+  outputSum += iTerm;                                                 // include integral amount
+  if (iawmode == iAwMode::iAwOff) outputSum -= pmTerm;                // include pmTerm (no anti-windup)
+  else outputSum = constrain(outputSum - pmTerm, outMin, outMax);     // include pmTerm and clamp
+  *myOutput = constrain(outputSum + peTerm + dTerm, outMin, outMax);  // include dTerm, clamp and drive output
+
+  lastError = error;
+  lastInput = input;
+  lastTime = now;
 }
 
 /* SetTunings(....)************************************************************

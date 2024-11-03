@@ -6,19 +6,24 @@
   "repository":
   {
     "type": "git",
-    "url": "https://github.com/Dlloydev/QuickPID"
+    "url": "https://github.com/metexon/QuickPID"
   },
   "authors":
   [
     {
       "name": "David Lloyd",
       "email": "dlloydev@testcor.ca",
-      "url": "https://github.com/Dlloydev/QuickPID",
+      "url": "https://github.com/Dlloydev/QuickPID"
+    },
+    {
+      "name": "Metexon team",
+      "email": "info@metexon.com",
+      "url": "https://github.com/metexon/QuickPID",
       "maintainer": true
     }
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Dlloydev/QuickPID",
+  "homepage": "https://github.com/metexon/QuickPID",
   "frameworks": "arduino",
   "platforms": "*"
 }

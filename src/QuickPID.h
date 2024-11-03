@@ -33,9 +33,15 @@ class QuickPID {
     void SetMode(Control Mode);
     void SetMode(uint8_t Mode);
 
-    // Performs the PID calculation. It should be called every time loop() cycles ON/OFF and calculation frequency
+    // Performs the PID calculation. It should be called every time loop() is called. Calculation frequency
     // can be set using SetMode and SetSampleTime respectively.
     bool Compute();
+
+    // returns true is Compute() would actually perform a PID calculation
+    bool NeedsCompute();  
+
+    // Actual PID calculation. Ususally called by Compute(). Only use, if you haved checked NeedsCompute() before.
+    void ComputeNow();
 
     // Sets and clamps the output to a specific range (0-255 by default).
     void SetOutputLimits(float Min, float Max);
